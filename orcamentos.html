@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sistema de Orçamentos</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f5f4;
+    --bg-tertiary: #eae9e7;
+    --text: #1a1a18;
+    --text-secondary: #6b6b67;
+    --text-muted: #a3a39f;
+    --border: rgba(0,0,0,0.12);
+    --border-strong: rgba(0,0,0,0.25);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --accent: #1a1a18;
+    --success-bg: #EAF3DE;
+    --success-text: #3B6D11;
+    --warning-bg: #FAEEDA;
+    --warning-text: #854F0B;
+    --danger-bg: #FCEBEB;
+    --danger-text: #A32D2D;
+    --info-bg: #E6F1FB;
+    --info-text: #185FA5;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg-secondary: #252523;
+      --bg-tertiary: #2e2e2b;
+      --text: #f0efe9;
+      --text-secondary: #a3a39f;
+      --text-muted: #6b6b67;
+      --border: rgba(255,255,255,0.1);
+      --border-strong: rgba(255,255,255,0.2);
+      --accent: #f0efe9;
+      --success-bg: #173404;
+      --success-text: #C0DD97;
+      --warning-bg: #412402;
+      --warning-text: #FAC775;
+      --danger-bg: #501313;
+      --danger-text: #F7C1C1;
+      --info-bg: #042C53;
+      --info-text: #B5D4F4;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-secondary);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  header {
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+
+  .logo { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo span { font-weight: 400; color: var(--text-secondary); }
+
+  main { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .tab {
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -0.5px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    color: var(--text);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  @media (max-width: 600px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--text);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    input:focus, select:focus, textarea:focus {
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
+    }
+  }
+
+  textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; cursor: pointer; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    border: 0.5px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    transition: background 0.12s, opacity 0.12s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: var(--bg-secondary); }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { opacity: 0.85; background: var(--accent); }
+
+  .btn-success { color: var(--success-text); border-color: var(--success-text); }
+  .btn-success:hover { background: var(--success-bg); }
+
+  .btn-danger { color: var(--danger-text); border-color: var(--danger-text); }
+  .btn-danger:hover { background: var(--danger-bg); }
+
+  .btn-info { color: var(--info-text); border-color: var(--info-text); }
+  .btn-info:hover { background: var(--info-bg); }
+
+  .btn-icon { padding: 6px 10px; font-size: 16px; line-height: 1; }
+
+  .row-flex { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .row-end { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin-top: 1rem; }
+
+  /* Items table */
+  .items-header {
+    display: grid;
+    grid-template-columns: 2fr 80px 110px 110px 38px;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .items-header span {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+  }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 2fr 80px 110px 110px 38px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .item-total {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: right;
+    padding: 0 4px;
+  }
+
+  .total-section {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2rem;
+    align-items: flex-end;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 0.5px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .total-block { text-align: right; }
+  .total-block label { margin-bottom: 2px; }
+  .total-number { font-size: 15px; font-weight: 600; }
+  .total-number.big { font-size: 22px; }
+
+  /* Orçamento cards na lista */
+  .orc-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 0.75rem;
+    transition: border-color 0.15s;
+  }
+
+  .orc-card:hover { border-color: var(--border-strong); }
+
+  .orc-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .orc-num { font-size: 12px; color: var(--text-muted); margin-bottom: 3px; }
+  .orc-cliente { font-size: 17px; font-weight: 600; }
+  .orc-contato { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .orc-valor { font-size: 18px; font-weight: 600; }
+  .orc-info { font-size: 12px; color: var(--text-muted); margin-top: 3px; text-align: right; }
+  .orc-actions { display: flex; gap: 6px; margin-top: 1rem; flex-wrap: wrap; }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    letter-spacing: 0.2px;
+  }
+
+  .badge-pendente { background: var(--warning-bg); color: var(--warning-text); }
+  .badge-aprovado { background: var(--success-bg); color: var(--success-text); }
+  .badge-reprovado { background: var(--danger-bg); color: var(--danger-text); }
+
+  .empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .empty-icon { font-size: 36px; margin-bottom: 1rem; opacity: 0.4; }
+  .empty strong { display: block; font-size: 16px; color: var(--text-secondary); margin-bottom: 0.5rem; }
+
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+    align-items: center;
+  }
+
+  .search-bar input { flex: 1; }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 600px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .stat-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+  }
+
+  .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); margin-bottom: 4px; }
+  .stat-value { font-size: 20px; font-weight: 600; }
+
+  hr-line { display: block; height: 0.5px; background: var(--border); margin: 1rem 0; border: none; }
+
+  /* Print styles */
+  @media print {
+    body { background: #fff !important; color: #000 !important; }
+    header, .no-print { display: none !important; }
+    main { padding: 0 !important; max-width: none !important; }
+    .section { display: block !important; }
+    #lista { display: none !important; }
+    #form { display: none !important; }
+    #print { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="no-print">
+  <div class="header-inner">
+    <div class="logo">Orçamentos <span>Pro</span></div>
+    <button class="btn btn-primary" onclick="novoOrcamento()">+ Novo orçamento</button>
+  </div>
+</header>
+
+<main>
+  <div class="no-print">
+    <div class="tabs">
+      <button class="tab active" id="tab-lista" onclick="showTab('lista')">Orçamentos</button>
+      <button class="tab" id="tab-form" onclick="showTab('form')">Editar</button>
+    </div>
+
+    <!-- LISTA -->
+    <div id="lista" class="section active">
+      <div class="stats-row" id="stats-row"></div>
+      <div class="search-bar">
+        <input type="text" id="busca" placeholder="Buscar por cliente ou número..." oninput="renderLista()" />
+        <select id="filtro-status" onchange="renderLista()" style="width:auto; flex:none;">
+          <option value="">Todos os status</option>
+          <option value="pendente">Pendente</option>
+          <option value="aprovado">Aprovado</option>
+          <option value="reprovado">Reprovado</option>
+        </select>
+      </div>
+      <div id="lista-container"></div>
+    </div>
+
+    <!-- FORM -->
+    <div id="form" class="section">
+      <div class="card">
+        <div class="card-title">Dados do cliente</div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Cliente *</label>
+            <input type="text" id="f-cliente" placeholder="Nome do cliente ou empresa" />
+          </div>
+          <div class="field">
+            <label>Contato / E-mail</label>
+            <input type="text" id="f-contato" placeholder="email@empresa.com" />
+          </div>
+          <div class="field">
+            <label>Telefone</label>
+            <input type="text" id="f-telefone" placeholder="(xx) 9 xxxx-xxxx" />
+          </div>
+          <div class="field">
+            <label>CNPJ / CPF</label>
+            <input type="text" id="f-doc" placeholder="00.000.000/0000-00" />
+          </div>
+          <div class="field">
+            <label>Data do orçamento</label>
+            <input type="date" id="f-data" />
+          </div>
+          <div class="field">
+            <label>Validade</label>
+            <input type="date" id="f-validade" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Endereço</label>
+          <input type="text" id="f-endereco" placeholder="Rua, número, cidade - UF" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Itens do orçamento</div>
+        <div class="items-header">
+          <span>Descrição</span>
+          <span>Qtd</span>
+          <span style="text-align:right;">Unit. (R$)</span>
+          <span style="text-align:right;">Total</span>
+          <span></span>
+        </div>
+        <div id="itens-container"></div>
+        <button class="btn" onclick="addItem()" style="margin-top:8px;">+ Adicionar item</button>
+
+        <div class="total-section">
+          <div class="total-block">
+            <label>Subtotal</label>
+            <div class="total-number" id="subtotal">R$ 0,00</div>
+          </div>
+          <div class="total-block">
+            <label>Desconto (%)</label>
+            <input type="number" id="f-desconto" value="0" min="0" max="100" step="0.5"
+              style="width:80px; text-align:center;" oninput="calcTotal()" />
+          </div>
+          <div class="total-block">
+            <label>Total</label>
+            <div class="total-number big" id="total-final">R$ 0,00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Observações e condições</div>
+        <div class="field">
+          <label>Observações</label>
+          <textarea id="f-obs" placeholder="Prazo de entrega, forma de pagamento, condições gerais..."></textarea>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Condições de pagamento</label>
+            <input type="text" id="f-pagamento" placeholder="Ex: 50% entrada + 50% na entrega" />
+          </div>
+          <div class="field">
+            <label>Prazo de entrega</label>
+            <input type="text" id="f-prazo" placeholder="Ex: 10 dias úteis após aprovação" />
+          </div>
+        </div>
+      </div>
+
+      <div class="row-end">
+        <div class="field" style="margin:0;">
+          <select id="f-status" style="width:auto;">
+            <option value="pendente">Pendente</option>
+            <option value="aprovado">Aprovado</option>
+            <option value="reprovado">Reprovado</option>
+          </select>
+        </div>
+        <button class="btn" onclick="showTab('lista')">Cancelar</button>
+        <button class="btn btn-success" onclick="salvarOrcamento()">&#10003; Salvar</button>
+        <button class="btn btn-info" onclick="imprimirAtual()">&#128438; Imprimir</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- PRINT AREA -->
+<div id="print" style="display:none; padding:2rem; max-width:780px; margin:0 auto; font-family:sans-serif; color:#111;"></div>
+
+<script>
+  // ---- Storage ----
+  const STORAGE_KEY = 'orcamentos_pro_v1';
+
+  function loadData() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch(e) { return []; }
+  }
+
+  function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  // ---- State ----
+  let orcamentos = loadData();
+  let editandoId = null;
+  let itens = [];
+
+  // ---- Utils ----
+  function fmtMoney(v) {
+    const n = parseFloat(v) || 0;
+    return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  function fmtDate(d) {
+    if (!d) return '';
+    const [y, m, day] = d.split('-');
+    return `${day}/${m}/${y}`;
+  }
+
+  function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  function nextNum() {
+    if (!orcamentos.length) return '0001';
+    const nums = orcamentos.map(o => parseInt(o.num) || 0);
+    return (Math.max(...nums) + 1).toString().padStart(4, '0');
+  }
+
+  function badgeHTML(status) {
+    const map = {
+      pendente: 'badge-pendente',
+      aprovado: 'badge-aprovado',
+      reprovado: 'badge-reprovado'
+    };
+    const label = status.charAt(0).toUpperCase() + status.slice(1);
+    return `<span class="badge ${map[status] || 'badge-pendente'}">${label}</span>`;
+  }
+
+  // ---- Tabs ----
+  function showTab(t) {
+    ['lista', 'form'].forEach(id => {
+      document.getElementById(id).classList.toggle('active', id === t);
+      document.getElementById('tab-' + id).classList.toggle('active', id === t);
+    });
+  }
+
+  // ---- Items ----
+  function addItem() {
+    itens.push({ desc: '', qty: 1, unit: 0 });
+    renderItens();
+  }
+
+  function removeItem(i) {
+    itens.splice(i, 1);
+    renderItens();
+    calcTotal();
+  }
+
+  function renderItens() {
+    const c = document.getElementById('itens-container');
+    c.innerHTML = itens.map((it, i) => `
+      <div class="item-row">
+        <input type="text" value="${escHTML(it.desc)}" placeholder="Descrição do produto ou serviço"
+          oninput="itens[${i}].desc=this.value" />
+        <input type="number" value="${it.qty}" min="1" step="1" style="text-align:center;"
+          oninput="itens[${i}].qty=parseFloat(this.value)||1; calcTotal(); renderItens();" />
+        <input type="number" value="${it.unit}" min="0" step="0.01" style="text-align:right;"
+          oninput="itens[${i}].unit=parseFloat(this.value)||0; calcTotal(); renderItens();" />
+        <div class="item-total">${fmtMoney((it.qty||1)*(it.unit||0))}</div>
+        <button class="btn btn-danger btn-icon" onclick="removeItem(${i})" title="Remover">×</button>
+      </div>
+    `).join('');
+  }
+
+  function calcTotal() {
+    const sub = itens.reduce((s, it) => s + (it.qty||1)*(it.unit||0), 0);
+    const desc = parseFloat(document.getElementById('f-desconto').value) || 0;
+    const total = sub * (1 - desc / 100);
+    document.getElementById('subtotal').textContent = fmtMoney(sub);
+    document.getElementById('total-final').textContent = fmtMoney(total);
+  }
+
+  // ---- Form ----
+  function novoOrcamento() {
+    editandoId = null;
+    itens = [{ desc: '', qty: 1, unit: 0 }];
+    const hoje = new Date().toISOString().split('T')[0];
+    const validade = new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0];
+    setFields({ cliente:'', contato:'', telefone:'', doc:'', data: hoje,
+      validade, endereco:'', obs:'', pagamento:'', prazo:'', desconto: 0, status:'pendente' });
+    renderItens();
+    calcTotal();
+    showTab('form');
+  }
+
+  function editarOrcamento(id) {
+    const o = orcamentos.find(x => x.id === id);
+    if (!o) return;
+    editandoId = id;
+    itens = o.itens.map(i => ({...i}));
+    setFields(o);
+    renderItens();
+    calcTotal();
+    showTab('form');
+  }
+
+  function setFields(o) {
+    ['cliente','contato','telefone','doc','data','validade','endereco','obs','pagamento','prazo','status'].forEach(k => {
+      const el = document.getElementById('f-' + k);
+      if (el) el.value = o[k] || '';
+    });
+    document.getElementById('f-desconto').value = o.desconto || 0;
+  }
+
+  function getFields() {
+    const get = id => (document.getElementById(id) || {}).value || '';
+    return {
+      cliente: get('f-cliente').trim(),
+      contato: get('f-contato'),
+      telefone: get('f-telefone'),
+      doc: get('f-doc'),
+      data: get('f-data'),
+      validade: get('f-validade'),
+      endereco: get('f-endereco'),
+      obs: get('f-obs'),
+      pagamento: get('f-pagamento'),
+      prazo: get('f-prazo'),
+      desconto: parseFloat(get('f-desconto')) || 0,
+      status: get('f-status'),
+    };
+  }
+
+  function salvarOrcamento() {
+    const fields = getFields();
+    if (!fields.cliente) { alert('Informe o nome do cliente.'); return; }
+    const sub = itens.reduce((s, it) => s + (it.qty||1)*(it.unit||0), 0);
+    const total = sub * (1 - fields.desconto / 100);
+    const o = {
+      ...fields,
+      id: editandoId || genId(),
+      num: editandoId ? orcamentos.find(x => x.id === editandoId).num : nextNum(),
+      itens: itens.map(i => ({...i})),
+      subtotal: sub,
+      total,
+      updatedAt: new Date().toISOString(),
+    };
+    if (!editandoId) o.createdAt = o.updatedAt;
+    const idx = orcamentos.findIndex(x => x.id === editandoId);
+    if (idx >= 0) orcamentos[idx] = o;
+    else orcamentos.push(o);
+    saveData(orcamentos);
+    renderLista();
+    renderStats();
+    showTab('lista');
+  }
+
+  function excluirOrcamento(id) {
+    const o = orcamentos.find(x => x.id === id);
+    if (!confirm(`Excluir orçamento #${o ? o.num : ''} de "${o ? o.cliente : ''}"?`)) return;
+    orcamentos = orcamentos.filter(x => x.id !== id);
+    saveData(orcamentos);
+    renderLista();
+    renderStats();
+  }
+
+  // ---- Lista ----
+  function renderLista() {
+    const c = document.getElementById('lista-container');
+    const q = (document.getElementById('busca').value || '').toLowerCase();
+    const st = document.getElementById('filtro-status').value;
+    const lista = [...orcamentos]
+      .filter(o => (!q || o.cliente.toLowerCase().includes(q) || o.num.includes(q))
+                && (!st || o.status === st))
+      .reverse();
+
+    if (!lista.length) {
+      c.innerHTML = `<div class="empty">
+        <div class="empty-icon">📄</div>
+        <strong>${orcamentos.length ? 'Nenhum resultado encontrado' : 'Nenhum orçamento ainda'}</strong>
+        ${orcamentos.length ? 'Tente outros filtros.' : 'Clique em "+ Novo orçamento" para começar.'}
+      </div>`;
+      return;
+    }
+
+    c.innerHTML = lista.map(o => `
+      <div class="orc-card">
+        <div class="orc-header">
+          <div>
+            <div class="orc-num">#${o.num} · ${fmtDate(o.data)}</div>
+            <div class="orc-cliente">${escHTML(o.cliente)}</div>
+            <div class="orc-contato">${escHTML(o.contato || '')}${o.telefone ? ' · ' + escHTML(o.telefone) : ''}</div>
+          </div>
+          <div>
+            <div>${badgeHTML(o.status)}</div>
+            <div class="orc-valor" style="margin-top:8px;">${fmtMoney(o.total)}</div>
+            <div class="orc-info">${o.itens.length} item(s)${o.validade ? ' · válido até ' + fmtDate(o.validade) : ''}</div>
+          </div>
+        </div>
+        <div class="orc-actions">
+          <button class="btn" onclick="editarOrcamento('${o.id}')">✎ Editar</button>
+          <button class="btn btn-info" onclick="imprimirOrcamento('${o.id}')">⎙ Imprimir</button>
+          <button class="btn btn-danger" onclick="excluirOrcamento('${o.id}')">✕ Excluir</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderStats() {
+    const total = orcamentos.length;
+    const aprovados = orcamentos.filter(o => o.status === 'aprovado').length;
+    const valorTotal = orcamentos.reduce((s, o) => s + (o.total || 0), 0);
+    const valorAprovado = orcamentos.filter(o => o.status === 'aprovado').reduce((s, o) => s + (o.total || 0), 0);
+    document.getElementById('stats-row').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-label">Total</div>
+        <div class="stat-value">${total}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Aprovados</div>
+        <div class="stat-value" style="color:var(--success-text);">${aprovados}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Valor total</div>
+        <div class="stat-value" style="font-size:15px;">${fmtMoney(valorTotal)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Aprovado</div>
+        <div class="stat-value" style="font-size:15px; color:var(--success-text);">${fmtMoney(valorAprovado)}</div>
+      </div>
+    `;
+  }
+
+  // ---- Print ----
+  function buildPrintHTML(o) {
+    const linhas = o.itens.map((it, i) => `
+      <tr>
+        <td style="padding:9px 8px; border-bottom:0.5px solid #e5e5e5;">${i+1}</td>
+        <td style="padding:9px 8px; border-bottom:0.5px solid #e5e5e5;">${escHTML(it.desc) || '—'}</td>
+        <td style="padding:9px 8px; border-bottom:0.5px solid #e5e5e5; text-align:center;">${it.qty}</td>
+        <td style="padding:9px 8px; border-bottom:0.5px solid #e5e5e5; text-align:right;">${fmtMoney(it.unit)}</td>
+        <td style="padding:9px 8px; border-bottom:0.5px solid #e5e5e5; text-align:right; font-weight:600;">${fmtMoney((it.qty||1)*(it.unit||0))}</td>
+      </tr>`).join('');
+
+    const descRow = o.desconto > 0 ? `
+      <tr>
+        <td colspan="4" style="padding:7px 8px; text-align:right; font-size:13px; color:#666;">Desconto (${o.desconto}%)</td>
+        <td style="padding:7px 8px; text-align:right; font-size:13px; color:#c00;">− ${fmtMoney(o.subtotal - o.total)}</td>
+      </tr>` : '';
+
+    const subRow = o.itens.length > 1 ? `
+      <tr>
+        <td colspan="4" style="padding:7px 8px; text-align:right; font-size:13px; color:#666;">Subtotal</td>
+        <td style="padding:7px 8px; text-align:right; font-size:13px;">${fmtMoney(o.subtotal)}</td>
+      </tr>` : '';
+
+    return `
+      <style>
+        @media print { body { -webkit-print-color-adjust: exact; } }
+      </style>
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; max-width:780px; margin:0 auto; padding:2.5rem 2rem; color:#111; font-size:14px; line-height:1.6;">
+
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #111; padding-bottom:1.25rem; margin-bottom:1.75rem;">
+          <div>
+            <div style="font-size:28px; font-weight:700; letter-spacing:-1px; margin-bottom:2px;">ORÇAMENTO</div>
+            <div style="font-size:14px; color:#666; font-weight:500;">#${o.num}</div>
+          </div>
+          <div style="text-align:right; font-size:13px; color:#444; line-height:1.8;">
+            <div>Data: <strong style="color:#111;">${fmtDate(o.data)}</strong></div>
+            ${o.validade ? `<div>Válido até: <strong style="color:#111;">${fmtDate(o.validade)}</strong></div>` : ''}
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:1.75rem;">
+          <div>
+            <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#999; margin-bottom:5px;">Cliente</div>
+            <div style="font-size:18px; font-weight:700;">${escHTML(o.cliente)}</div>
+            ${o.doc ? `<div style="font-size:13px; color:#555; margin-top:2px;">CNPJ/CPF: ${escHTML(o.doc)}</div>` : ''}
+            ${o.contato ? `<div style="font-size:13px; color:#555;">${escHTML(o.contato)}</div>` : ''}
+            ${o.telefone ? `<div style="font-size:13px; color:#555;">${escHTML(o.telefone)}</div>` : ''}
+            ${o.endereco ? `<div style="font-size:13px; color:#555; margin-top:4px;">${escHTML(o.endereco)}</div>` : ''}
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#999; margin-bottom:5px;">Status</div>
+            <div style="display:inline-block; padding:4px 14px; border-radius:99px; font-size:12px; font-weight:700; background:${o.status==='aprovado'?'#EAF3DE':o.status==='reprovado'?'#FCEBEB':'#FAEEDA'}; color:${o.status==='aprovado'?'#3B6D11':o.status==='reprovado'?'#A32D2D':'#854F0B'};">${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</div>
+          </div>
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:1.5rem;">
+          <thead>
+            <tr style="border-bottom:1.5px solid #111;">
+              <th style="padding:8px 8px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.4px; font-weight:700; color:#888; width:32px;">#</th>
+              <th style="padding:8px 8px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.4px; font-weight:700; color:#888;">Descrição</th>
+              <th style="padding:8px 8px; text-align:center; font-size:11px; text-transform:uppercase; letter-spacing:0.4px; font-weight:700; color:#888; width:60px;">Qtd</th>
+              <th style="padding:8px 8px; text-align:right; font-size:11px; text-transform:uppercase; letter-spacing:0.4px; font-weight:700; color:#888; width:120px;">Unit.</th>
+              <th style="padding:8px 8px; text-align:right; font-size:11px; text-transform:uppercase; letter-spacing:0.4px; font-weight:700; color:#888; width:120px;">Total</th>
+            </tr>
+          </thead>
+          <tbody>${linhas}</tbody>
+          <tfoot>
+            ${subRow}
+            ${descRow}
+            <tr style="border-top:2px solid #111;">
+              <td colspan="4" style="padding:11px 8px; text-align:right; font-size:18px; font-weight:700;">TOTAL</td>
+              <td style="padding:11px 8px; text-align:right; font-size:20px; font-weight:700;">${fmtMoney(o.total)}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        ${(o.pagamento || o.prazo) ? `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.25rem;">
+          ${o.pagamento ? `<div style="border:0.5px solid #ddd; border-radius:8px; padding:12px 14px;"><div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#999; margin-bottom:4px;">Pagamento</div><div style="font-size:13px;">${escHTML(o.pagamento)}</div></div>` : ''}
+          ${o.prazo ? `<div style="border:0.5px solid #ddd; border-radius:8px; padding:12px 14px;"><div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#999; margin-bottom:4px;">Prazo de entrega</div><div style="font-size:13px;">${escHTML(o.prazo)}</div></div>` : ''}
+        </div>` : ''}
+
+        ${o.obs ? `<div style="border:0.5px solid #ddd; border-radius:8px; padding:12px 14px; margin-bottom:1.25rem;"><div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#999; margin-bottom:4px;">Observações</div><div style="font-size:13px; color:#444; white-space:pre-line;">${escHTML(o.obs)}</div></div>` : ''}
+
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:#bbb; border-top:0.5px solid #eee; padding-top:1rem; margin-top:1.5rem;">
+          <div>Orçamento gerado em ${new Date().toLocaleDateString('pt-BR', { dateStyle:'long' })}</div>
+          <div>#${o.num}</div>
+        </div>
+
+        <div style="text-align:center; margin-top:2.5rem; padding-top:1.5rem; border-top:0.5px solid #eee;">
+          <div style="font-size:13px; color:#999;">Assinatura e carimbo</div>
+          <div style="margin: 0 auto; margin-top:2.5rem; width:260px; border-top:1px solid #aaa;"></div>
+        </div>
+
+      </div>`;
+  }
+
+  function imprimirOrcamento(id) {
+    const o = orcamentos.find(x => x.id === id);
+    if (!o) return;
+    const w = window.open('', '_blank', 'width=900,height=750');
+    w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Orçamento #${o.num} · ${o.cliente}</title></head><body style="margin:0; background:#f5f5f5;">${buildPrintHTML(o)}<script>window.onload=function(){window.print();}<\/script></body></html>`);
+    w.document.close();
+  }
+
+  function imprimirAtual() {
+    const fields = getFields();
+    if (!fields.cliente) { alert('Salve o orçamento antes de imprimir.'); return; }
+    salvarOrcamento();
+    const o = editandoId
+      ? orcamentos.find(x => x.id === editandoId)
+      : orcamentos[orcamentos.length - 1];
+    if (o) imprimirOrcamento(o.id);
+  }
+
+  function escHTML(str) {
+    return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ---- Init ----
+  renderStats();
+  renderLista();
+</script>
+</body>
+</html>
